@@ -1,0 +1,6 @@
+devel_space: /home/swarmie/SwarmBaseCode-ROS/devel
+install: false
+install_space: /home/swarmie/SwarmBaseCode-ROS/install
+profile: default
+source_space: /home/swarmie/SwarmBaseCode-ROS/src
+workspace: /home/swarmie/SwarmBaseCode-ROS

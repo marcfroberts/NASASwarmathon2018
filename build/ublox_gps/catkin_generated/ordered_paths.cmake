@@ -1,0 +1,1 @@
+set(ORDERED_PATHS "/home/swarmie/SwarmBaseCode-ROS/devel/lib;/opt/ros/kinetic/lib")

@@ -1,0 +1,8 @@
+prefix=/home/swarmie/SwarmBaseCode-ROS/devel
+
+Name: behaviours
+Description: Description of behaviours
+Version: 0.2.0
+Cflags: 
+Libs: -L/home/swarmie/SwarmBaseCode-ROS/devel/lib 
+Requires: geometry_msgs roscpp sensor_msgs std_msgs random_numbers tf apriltags_ros
