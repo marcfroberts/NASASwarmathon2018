@@ -26,12 +26,12 @@ void SearchController::Reset() {
 Result SearchController::DoWork() {
 
   if (!result.wpts.waypoints.empty()) {
-    if (hypot(result.wpts.waypoints[0].x-currentLocation.x, result.wpts.waypoints[0].y-currentLocation.y) < 0.15) {//Alec G.: original right-most value: 0.10
+    if (hypot(result.wpts.waypoints[0].x-currentLocation.x, result.wpts.waypoints[0].y-currentLocation.y) < 0.15) {
       attemptCount = 0;
     }
   }
 
-  if (attemptCount > 0 && attemptCount < 2) {//Alec G.: range changed from 0-5 to 0-2; changes efficiency
+  if (attemptCount > 0 && attemptCount < 2) {
     attemptCount++;
     if (succesfullPickup) {
       succesfullPickup = false;
@@ -39,7 +39,7 @@ Result SearchController::DoWork() {
     }
     return result;
   }
-  else if (attemptCount >= 2 || attemptCount == 0) //Alec G.: same change here as before
+  else if (attemptCount >= 2 || attemptCount == 0) 
   {
     attemptCount = 1;
 
@@ -47,24 +47,22 @@ Result SearchController::DoWork() {
     result.type = waypoint;
     Point  searchLocation;
 
-    //select new position 50 cm from current location
-
-    //Alec G.: a variable made to change the max dist. for searching
-    float _cm = 1.5//orininal value: 0.5
-
+    //select new position 50 cm from current location >> 100cm
     if (first_waypoint)
     {
       first_waypoint = false;
       searchLocation.theta = currentLocation.theta + M_PI;
-      searchLocation.x = currentLocation.x + (_cm * cos(searchLocation.theta));//Alec G.: _cm replacing 0.5 in these two lines of code
-      searchLocation.y = currentLocation.y + (_cm * sin(searchLocation.theta));//Alec G.: "
+      searchLocation.x = currentLocation.x + (1.0 * cos(searchLocation.theta));
+      searchLocation.y = currentLocation.y + (1.0 * sin(searchLocation.theta));
     }
     else
     {
       //select new heading from Gaussian distribution around current heading
+      //Alec G.:change the max dist. for searching 0.5 >> 1.5
+
       searchLocation.theta = rng->gaussian(currentLocation.theta, 0.785398); //45 degrees in radians
-      searchLocation.x = currentLocation.x + (_cm * cos(searchLocation.theta));//0.5
-      searchLocation.y = currentLocation.y + (_cm * sin(searchLocation.theta));//0.5
+      searchLocation.x = currentLocation.x + (1.5 * cos(searchLocation.theta));
+      searchLocation.y = currentLocation.y + (1.5 * sin(searchLocation.theta));
     }
 
     result.wpts.waypoints.clear();
@@ -109,5 +107,4 @@ bool SearchController::HasWork() {
 void SearchController::SetSuccesfullPickup() {
   succesfullPickup = true;
 }
-
 
