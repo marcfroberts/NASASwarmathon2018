@@ -1,50 +1,110 @@
-#ifndef SEARCH_CONTROLLER
-#define SEARCH_CONTROLLER
+#include "SearchController.h"
+#include <angles/angles.h>
 
-#include <random_numbers/random_numbers.h>
-#include "Controller.h"
+SearchController::SearchController() {
+  rng = new random_numbers::RandomNumberGenerator();
+  currentLocation.x = 0;
+  currentLocation.y = 0;
+  currentLocation.theta = 0;
+
+  centerLocation.x = 0;
+  centerLocation.y = 0;
+  centerLocation.theta = 0;
+  result.PIDMode = FAST_PID;
+
+  result.fingerAngle = M_PI/2;
+  result.wristAngle = M_PI/4;
+}
+
+void SearchController::Reset() {
+  result.reset = false;
+}
 
 /**
- * This class implements the search control algorithm for the rovers. The code
- * here should be modified and enhanced to improve search performance.
+ * This code implements a basic random walk search.
  */
-class SearchController : virtual Controller {
+Result SearchController::DoWork() {
 
-public:
+  if (!result.wpts.waypoints.empty()) {
+    if (hypot(result.wpts.waypoints[0].x-currentLocation.x, result.wpts.waypoints[0].y-currentLocation.y) < 0.15) {
+      attemptCount = 0;
+    }
+  }
 
-  SearchController();
+  if (attemptCount > 0 && attemptCount < 2) {
+    attemptCount++;
+    if (succesfullPickup) {
+      succesfullPickup = false;
+      attemptCount = 1;
+    }
+    return result;
+  }
+  else if (attemptCount >= 2 || attemptCount == 0) 
+  {
+    attemptCount = 1;
 
-  void Reset() override;
 
-  // performs search pattern
-  Result DoWork() override;
-  bool ShouldInterrupt() override;
-  bool HasWork() override;
+    result.type = waypoint;
+    Point  searchLocation;
 
-  // sets the value of the current location
-  //void UpdateData(geometry_msgs::Pose2D currentLocation, geometry_msgs::Pose2D centerLocation);
-  void SetCurrentLocation(Point currentLocation);
-  void SetCenterLocation(Point centerLocation);
-  void SetSuccesfullPickup();
+    //select new position 50 cm from current location
+    if (first_waypoint)
+    {
+      first_waypoint = false;
+      searchLocation.theta = currentLocation.theta + M_PI;
+      searchLocation.x = currentLocation.x + (1.5 * cos(searchLocation.theta));
+      searchLocation.y = currentLocation.y + (1.5 * sin(searchLocation.theta));
+    }
+    else
+    {
+      //select new heading from Gaussian distribution around current heading
+      //Alec G.:change the max dist. for searching 0.5 >> 1.5
 
-protected:
+      searchLocation.theta = rng->gaussian(currentLocation.theta, 0.785398); //45 degrees in radians
+      searchLocation.x = currentLocation.x + (1.5 * cos(searchLocation.theta));
+      searchLocation.y = currentLocation.y + (1.5 * sin(searchLocation.theta));
+    }
 
-  void ProcessData();
+    result.wpts.waypoints.clear();
+    result.wpts.waypoints.insert(result.wpts.waypoints.begin(), searchLocation);
+    
+    return result;
+  }
 
-private:
+}
 
-  random_numbers::RandomNumberGenerator* rng;
-  Point currentLocation;
-  Point centerLocation;
-  Point searchLocation;
-  int attemptCount = 0;
-  //struct for returning data to ROS adapter
-  Result result;
+void SearchController::SetCenterLocation(Point centerLocation) {
+  
+  float diffX = this->centerLocation.x - centerLocation.x;
+  float diffY = this->centerLocation.y - centerLocation.y;
+  this->centerLocation = centerLocation;
+  
+  if (!result.wpts.waypoints.empty())
+  {
+  result.wpts.waypoints.back().x -= diffX;
+  result.wpts.waypoints.back().y -= diffY;
+  }
+  
+}
 
-  // Search state
-  // Flag to allow special behaviour for the first waypoint
-  bool first_waypoint = true;
-  bool succesfullPickup = false;
-};
+void SearchController::SetCurrentLocation(Point currentLocation) {
+  this->currentLocation = currentLocation;
+}
 
-#endif /* SEARCH_CONTROLLER */
+void SearchController::ProcessData() {
+}
+
+bool SearchController::ShouldInterrupt(){
+  ProcessData();
+
+  return false;
+}
+
+bool SearchController::HasWork() {
+  return true;
+}
+
+void SearchController::SetSuccesfullPickup() {
+  succesfullPickup = true;
+}
+
